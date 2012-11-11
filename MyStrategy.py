@@ -3,7 +3,7 @@ from math import *
 from pprint import pprint
 from copy import copy
 import time
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 
 from model.Move import Move
 from model.FireType import FireType
@@ -226,7 +226,7 @@ def CollectAttacks(me, world):
       yield Attack(rel_angle=rel_angle, fire_type=fire_type, value=value)
 
 
-current_control = 0
+current_control = defaultdict(complex)
 
 start = time.clock()
 class MyStrategy:
@@ -265,10 +265,10 @@ class MyStrategy:
 
     freq = 1 if world.shells else 8
     if world.tick % freq == 0:
-      current_control = ChooseControl(me, world)
+      current_control[me.id] = ChooseControl(me, world)
 
-    move.left_track_power = current_control.real
-    move.right_track_power = current_control.imag
+    move.left_track_power = current_control[me.id].real
+    move.right_track_power = current_control[me.id].imag
 
     move.turret_turn = 1 if attack.rel_angle > 0 else -1
     move.fire_type = attack.fire_type if abs(attack.rel_angle) < 0.02 else FireType.NONE
