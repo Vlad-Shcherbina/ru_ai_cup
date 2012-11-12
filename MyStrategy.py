@@ -89,7 +89,7 @@ def PositionDanger(me, tanks):
 
 MIN_SHELL_R = -17
 MAX_SHELL_R = 4.5
-HIT_PENALTY = 10
+HIT_PENALTY = 20
 
 def EvaluateControl(me, world, control):
   score = 0
@@ -103,7 +103,6 @@ def EvaluateControl(me, world, control):
       me.v, me.angular_speed,
       step=STEP)
 
-  #hit_by = set()
   collected = set()
   dist_to_shell = {}
   for t, (x, a) in enumerate(trace):
@@ -112,25 +111,21 @@ def EvaluateControl(me, world, control):
       break
 
     for shell in world.shells_future[t]:
-      #if shell.id in hit_by:
-      #  continue
       d = abs(x - shell.pos)
       if d < me.r + MAX_SHELL_R:
-        #score -= 10
-        #hit_by.add(shell.id)
         if shell.id not in dist_to_shell:
           dist_to_shell[shell.id] = 1e3
         dist_to_shell[shell.id] = min(dist_to_shell[shell.id], d)
 
-    if IsStuck(x, 0.7*me.r, world):
+    if IsStuck(x, 0.5*me.r, world):
       reliability *= 0.95**STEP
-      score -= 0.005 * STEP
+      score -= 0.003 * STEP
 
   for tank in world.tanks:
     if tank.id == me.id:
       continue
     d = abs(tank.pos + tank.v * t - x)
-    D = (me.r + tank.r) * 0.8
+    D = (me.r + tank.r) * 0.7
     if d > D:
       continue
     if d < 0.5 * D:
@@ -138,7 +133,7 @@ def EvaluateControl(me, world, control):
     else:
       q = (1 - d / D) * 2
     reliability *= 0.96**(STEP * q * ((1 - 1 / PLANNING_INTERVAL)))
-    score -= 0.005 * STEP * (1 - 1 / PLANNING_INTERVAL)
+    score -= 0.002 * STEP * (1 - 1 / PLANNING_INTERVAL)
 
 
     if reliability < 0.1:
