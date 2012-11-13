@@ -91,6 +91,11 @@ MIN_SHELL_R = -17
 MAX_SHELL_R = 4.5
 HIT_PENALTY = 20
 
+
+def BonusTimeFunction(t):
+  return 1 / (1 + t / 75)
+
+
 def EvaluateControl(me, world, control):
   score = 0
 
@@ -135,7 +140,6 @@ def EvaluateControl(me, world, control):
     reliability *= 0.96**(STEP * q * ((1 - 1 / PLANNING_INTERVAL)))
     score -= 0.002 * STEP * (1 - 1 / PLANNING_INTERVAL)
 
-
     if reliability < 0.1:
       continue
 
@@ -143,7 +147,7 @@ def EvaluateControl(me, world, control):
       if bonus in collected:
         continue
       if abs(x - bonus) < 0.9*me.r:
-        score += (1 - 0.3 * (t / PLANNING_INTERVAL)) * reliability
+        score += BonusTimeFunction(t) * reliability
         collected.add(bonus)
 
   for _, d in dist_to_shell.items():
@@ -166,7 +170,7 @@ def EvaluateControl(me, world, control):
       tt = ArrivalTime(rel_b)
       closest = min(closest, tt + t)
 
-    score += (0.7 * 100 / (100 + closest - PLANNING_INTERVAL)) * reliability
+    score += BonusTimeFunction(closest) * reliability
 
   return score
 
