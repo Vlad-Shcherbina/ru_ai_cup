@@ -270,7 +270,10 @@ class MyStrategy:
     move.right_track_power = current_control[me.id].imag
 
     move.turret_turn = 1 if attack.rel_angle > 0 else -1
-    move.fire_type = attack.fire_type if abs(attack.rel_angle) < 0.02 else FireType.NONE
+    if abs(attack.rel_angle) < 0.02 and world.tick >= 7:
+      move.fire_type = attack.fire_type
+    else:
+      move.fire_type = FireType.NONE
     prev_move = copy(move)
 
 
