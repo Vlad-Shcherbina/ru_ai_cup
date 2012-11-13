@@ -124,7 +124,7 @@ def EvaluateControl(me, world, control):
 
     if IsStuck(x, 0.5*me.r, world):
       reliability *= 0.95**STEP
-      score -= 0.003 * STEP
+      score -= 0.001 * STEP
 
   for tank in world.tanks:
     if tank.id == me.id:
@@ -138,7 +138,7 @@ def EvaluateControl(me, world, control):
     else:
       q = (1 - d / D) * 2
     reliability *= 0.96**(STEP * q * ((1 - 1 / PLANNING_INTERVAL)))
-    score -= 0.002 * STEP * (1 - 1 / PLANNING_INTERVAL)
+    score -= 0.001 * STEP * (1 - 1 / PLANNING_INTERVAL)
 
     if reliability < 0.1:
       continue
