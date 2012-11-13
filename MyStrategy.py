@@ -106,6 +106,7 @@ def EvaluateControl(me, world, control):
       control,
       me.pos, me.angle,
       me.v, me.angular_speed,
+      efficiency=me.efficiency,
       step=STEP)
 
   collected = set()
@@ -167,7 +168,7 @@ def EvaluateControl(me, world, control):
       if bonus in collected:
         continue
       rel_b = (bonus - x) * cmath.rect(1, -a)
-      tt = ArrivalTime(rel_b)
+      tt = ArrivalTime(rel_b) / me.efficiency
       closest = min(closest, tt + t)
 
     score += BonusTimeFunction(closest) * reliability
@@ -188,9 +189,9 @@ def ChooseControl(me, world):
   control = max(possible_controls, key=f)
   score = f(control)
   default_score = f(0)
-  print '{:.3f}'.format(score)
-  if score > -5 and default_score < -5:
-    print 'evaded!!!!!!!!!!!!!!!!!'
+  #print '{:.3f}'.format(score)
+  #if score > -5 and default_score < -5:
+  #  print 'evaded!!!!!!!!!!!!!!!!!'
 
   return control
 
@@ -232,11 +233,15 @@ class MyStrategy:
   def move(self, me, world, move):
     global current_control
 
-    print world.tick / (time.clock() - start + 1e-6), 'frames per second'
+    if world.tick % 100 == 0:
+      print world.tick / (time.clock() - start + 1e-6), 'frames per second'
 
     PreprocessUnit(me)
     for unit in world.tanks + world.bonuses + world.shells:
       PreprocessUnit(unit)
+
+    for tank in [me] + world.tanks:
+      tank.efficiency = 0.5 + 0.5 * tank.crew_health / tank.crew_max_health
 
     if world.tick > 30e10:
       def f(pos):
@@ -251,13 +256,13 @@ class MyStrategy:
       show()
       exit()
 
-
     attacks = CollectAttacks(me, world)
     def CurrentAttackValue(attack):
       result = attack.value
-      t = abs(attack.rel_angle) / me.turret_turn_speed - me.remaining_reloading_time
+      t = (abs(attack.rel_angle) / (me.turret_turn_speed * me.efficiency) -
+           me.remaining_reloading_time)
       if t > 0:
-        result *= max(1 - t / 150, 0.1)
+        result *= max(1 - t / me.reloading_time, 0.1)
       return result
 
     attack = max(attacks, key=CurrentAttackValue)

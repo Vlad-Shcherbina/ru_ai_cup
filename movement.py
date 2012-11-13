@@ -64,9 +64,9 @@ def ArrivalTime(pos):
   return min(t1, t2)
 
 
-def PredictMovement(control, pos0, a0, v0=0, w0=0, step=1):
-  f = ControlForwardSpeed(control)
-  w = ControlAngularSpeed(control)
+def PredictMovement(control, pos0, a0, v0=0, w0=0, efficiency=1, step=1):
+  f = ControlForwardSpeed(control) * efficiency
+  w = ControlAngularSpeed(control) * efficiency
   x = pos0
   v = f
   a = a0
