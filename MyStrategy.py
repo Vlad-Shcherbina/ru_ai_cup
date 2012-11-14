@@ -9,7 +9,7 @@ from model.Move import Move
 from model.FireType import FireType
 from model.TankType import TankType
 from model.ShellType import ShellType
-from model.Shell import Shell
+from model.BonusType import BonusType
 
 from movement import *
 
@@ -99,8 +99,6 @@ def BonusTimeFunction(t):
 def EvaluateControl(me, world, control):
   score = 0
 
-  bonuses = [bonus.pos for bonus in world.bonuses]
-
   reliability = 1.0
   trace = PredictMovement(
       control,
@@ -144,11 +142,11 @@ def EvaluateControl(me, world, control):
     if reliability < 0.1:
       continue
 
-    for bonus in bonuses:
+    for bonus in world.bonuses:
       if bonus in collected:
         continue
-      if abs(x - bonus) < 0.9*me.r:
-        score += BonusTimeFunction(t) * reliability
+      if abs(x - bonus.pos) < 0.9*me.r:
+        score += BonusTimeFunction(t) * bonus.value * reliability
         collected.add(bonus)
 
   for _, d in dist_to_shell.items():
@@ -163,15 +161,16 @@ def EvaluateControl(me, world, control):
   score -= 0.02 * PositionDanger(new_me, world.tanks)
 
   if reliability > 0.1:
-    closest = 1e10
-    for bonus in bonuses:
+    best_bonus_value = 0
+    for bonus in world.bonuses:
       if bonus in collected:
         continue
-      rel_b = (bonus - x) * cmath.rect(1, -a)
+      rel_b = (bonus.pos - x) * cmath.rect(1, -a)
       tt = ArrivalTime(rel_b) / me.efficiency
-      closest = min(closest, tt + t)
+      best_bonus_value = max(best_bonus_value,
+                             BonusTimeFunction(t + tt) * bonus.value)
 
-    score += BonusTimeFunction(closest) * reliability
+    score += best_bonus_value * reliability
 
   return score
 
@@ -242,6 +241,24 @@ class MyStrategy:
 
     for tank in [me] + world.tanks:
       tank.efficiency = 0.5 + 0.5 * tank.crew_health / tank.crew_max_health
+
+    for bonus in world.bonuses:
+      if bonus.type == BonusType.MEDIKIT:
+        # relative increase in efficiency
+        d = min(35, me.crew_max_health - me.crew_health)
+        d /= me.crew_health + me.crew_max_health
+        bonus.value = 0.05 + 7 * d
+        if me.crew_health <= 20:
+          bonus.value *= 1.5
+      elif bonus.type == BonusType.REPAIR_KIT:
+        bonus.value = 0.05 + 1.5 * (1 - me.hull_durability / me.hull_max_durability)
+        if me.hull_durability <= 20:
+          bonus.value *= 1.5
+      elif bonus.type == BonusType.AMMO_CRATE:
+        bonus.value = 1 / (1 + me.premium_shell_count / 2)
+      else:
+        print 'UNKNOWN BONUS TYPE!!!'
+        bonus.value = 1
 
     if world.tick > 30e10:
       def f(pos):
