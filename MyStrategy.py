@@ -217,6 +217,10 @@ def CollectAttacks(me, world):
 
       target = tank.pos + tank.v * t
 
+      clip = 40
+      target = complex(max(clip, min(target.real, world.width - clip)),
+                       max(clip, min(target.imag, world.height - clip)))
+
       rel_angle = cmath.phase((target - me.pos) * turret_correction)
       value = 30 if is_premium else 20
       fire_type = FireType.PREMIUM_PREFERRED if is_premium else FireType.REGULAR
