@@ -6,6 +6,7 @@ import time
 from collections import namedtuple, defaultdict
 
 from model.Move import Move
+from model.Tank import Tank
 from model.FireType import FireType
 from model.TankType import TankType
 from model.ShellType import ShellType
@@ -201,6 +202,47 @@ def ShellTravelTime(dist, is_premium):
   return log(shell_v / (shell_v - shell_decel * dist)) / shell_decel
 
 
+def TraceShot(angle, is_premium, me, world):
+  obstacles = [tank for tank in world.tanks if tank.id != me.id]
+  obstacles += world.bonuses
+  events = {}
+  for o in obstacles:
+    dist = abs(me.pos - o.pos) - me.virtual_gun_length - 0.3 * o.r
+    t = ShellTravelTime(dist, is_premium)
+    if t >= 0:
+      events[o] = t
+
+  score = 0
+  reliability = 1
+  for e in sorted(events, key=events.get):
+    t = events[e]
+    rel_pos = (e.pos + e.v * t - me.pos) * cmath.rect(1, -angle)
+    if rel_pos.real < 0:
+      continue
+    d = abs(rel_pos.imag)
+    d1 = 0.5 * (e.r + 3.75)
+    d2 = e.r + 3.75
+    if d < d1:
+      w = 1
+    elif d < d2:
+      w = (d2 - d) / (d2 - d1)
+    else:
+      w = 0
+
+    def HitValue(e):
+      dmg = 35 if is_premium else 20
+      if isinstance(e, Tank) and IsAlive(e):
+        return -dmg if e.teammate else dmg
+      return 0
+
+    score += reliability * w * HitValue(e)
+    reliability *= 1 - w
+    if reliability < 0.01:
+      break
+
+  return score
+
+
 Attack = namedtuple('Attack', 'rel_angle fire_type value')
 
 def CollectAttacks(me, world):
@@ -225,16 +267,27 @@ def CollectAttacks(me, world):
                        max(clip, min(target.imag, world.height - clip)))
 
       rel_angle = cmath.phase((target - me.pos) * turret_correction)
-      value = 30 if is_premium else 20
-      fire_type = FireType.PREMIUM_PREFERRED if is_premium else FireType.REGULAR
 
-      if not IsAlive(tank):
-        value = 0
+      abs_angle = rel_angle + me.angle + me.turret_relative_angle
+      value = TraceShot(abs_angle, is_premium, me, world)
+
+      fire_type = FireType.PREMIUM_PREFERRED if is_premium else FireType.REGULAR
 
       yield Attack(rel_angle=rel_angle, fire_type=fire_type, value=value)
 
 
 current_control = defaultdict(complex)
+
+
+def DrawPlot(me, world):
+  #for TraceShot(angle, is_premium, me, world):
+  xs = [0.5 * i for i in range(720)]
+  ys = [TraceShot(x * pi / 180 * 0.5, False, me, world) for x in range(720)]
+  from matplotlib.pyplot import *
+  plot(xs, ys, 'o')
+  show()
+  exit()
+
 
 start = time.clock()
 class MyStrategy:
@@ -250,6 +303,9 @@ class MyStrategy:
 
     for tank in [me] + world.tanks:
       tank.efficiency = 0.5 + 0.5 * tank.crew_health / tank.crew_max_health
+
+    #if world.tick == 500:
+    #  DrawPlot(me, world)
 
     for bonus in world.bonuses:
       if bonus.type == BonusType.MEDIKIT:
@@ -288,7 +344,9 @@ class MyStrategy:
     move.right_track_power = current_control[me.id].imag
 
     my_index = sorted(t.id for t in world.tanks if t.teammate).index(me.id)
-    if abs(attack.rel_angle) < 0.005 and world.tick >= 6 + 2 * my_index:
+    if (abs(attack.rel_angle) < 0.005 and
+        world.tick >= 6 + 2 * my_index and
+        attack.value > 1):
       move.fire_type = attack.fire_type
     else:
       move.fire_type = FireType.NONE
