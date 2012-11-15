@@ -293,12 +293,15 @@ class MyStrategy:
     move.left_track_power = current_control[me.id].real
     move.right_track_power = current_control[me.id].imag
 
-    move.turret_turn = 1 if attack.rel_angle > 0 else -1
-    if abs(attack.rel_angle) < 0.02 and world.tick >= 7:
+    if abs(attack.rel_angle) < 0.005 and world.tick >= 7:
       move.fire_type = attack.fire_type
     else:
       move.fire_type = FireType.NONE
-    prev_move = copy(move)
+
+    needed_turn = attack.rel_angle - me.angular_speed
+    needed_turn /= me.turret_turn_speed * me.efficiency
+    needed_turn = max(-1, min(needed_turn, 1))
+    move.turret_turn = needed_turn
 
 
   def select_tank(self, tank_index, team_size):
