@@ -14,13 +14,6 @@ from model.BonusType import BonusType
 from movement import *
 
 
-#try:
-#  import numpy
-#  from matplotlib.pyplot import *
-#except ImportError:
-#  pass
-
-
 PLANNING_INTERVAL = 75
 STEP = 3
 
@@ -265,19 +258,6 @@ class MyStrategy:
       else:
         print 'UNKNOWN BONUS TYPE!!!'
         bonus.value = 1
-
-    if world.tick > 30e10:
-      def f(pos):
-        new_me = copy(me)
-        new_me.pos = pos
-        return PositionDanger(new_me, world.tanks)
-      z = numpy.array([[f(complex(x, y)) for x in range(0, 1280, 4)] for y in range(0, 800, 4)])
-
-      fig = figure()
-      ax = fig.add_subplot(111)
-      ax.imshow(z)
-      show()
-      exit()
 
     attacks = CollectAttacks(me, world)
     def CurrentAttackValue(attack):
