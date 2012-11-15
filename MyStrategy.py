@@ -208,10 +208,12 @@ def CollectAttacks(me, world):
         continue
 
       shell_v = 13.3 if is_premium else 16.6
-      shell_decel = 13.3 / 0.13 if is_premium else 0.08 / 16.6
+      shell_decel = 0.13 / 13.3 if is_premium else 0.08 / 16.6
 
       dist = abs(me.pos - tank.pos)
-      t = dist / shell_v
+      if shell_v <= shell_decel * dist:
+        continue
+      t = log(shell_v / (shell_v - shell_decel * dist)) / shell_decel
 
       target = tank.pos + tank.v * t
 
