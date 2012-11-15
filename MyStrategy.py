@@ -188,6 +188,19 @@ def ChooseControl(me, world):
   return control
 
 
+def ShellTravelTime(dist, is_premium):
+  """Return time for a shell to pass given distance (or -1)"""
+  shell_v = 13.3 if is_premium else 16.6
+  shell_decel = 0.13 / 13.3 if is_premium else 0.08 / 16.6
+
+  dist = max(dist, 0)
+
+  if shell_v <= shell_decel * dist:
+    return -1
+
+  return log(shell_v / (shell_v - shell_decel * dist)) / shell_decel
+
+
 Attack = namedtuple('Attack', 'rel_angle fire_type value')
 
 def CollectAttacks(me, world):
@@ -200,13 +213,10 @@ def CollectAttacks(me, world):
       if tank.teammate:
         continue
 
-      shell_v = 13.3 if is_premium else 16.6
-      shell_decel = 0.13 / 13.3 if is_premium else 0.08 / 16.6
-
-      dist = abs(me.pos - tank.pos)
-      if shell_v <= shell_decel * dist:
+      dist = abs(me.pos - tank.pos) - me.virtual_gun_length - 0.3 * tank.r
+      t = ShellTravelTime(dist, is_premium)
+      if t < 0:
         continue
-      t = log(shell_v / (shell_v - shell_decel * dist)) / shell_decel
 
       target = tank.pos + tank.v * t
 
