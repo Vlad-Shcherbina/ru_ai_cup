@@ -229,6 +229,20 @@ def TraceShot(angle, is_premium, me, world):
     else:
       w = 0
 
+    chance_to_evade = 0
+    if isinstance(e, Tank) and IsAlive(e) and not e.teammate:
+      evasion_speed = 0.15 + 0.85 * abs(sin(angle - e.angle))
+      q = e.r * 1.0 / evasion_speed / (t + 1e-3)
+      if q < 2:
+        chance_to_evade = 1
+      elif q < 4:
+        chance_to_evade = (q - 2) / 2
+      else:
+        chance_to_evade = 0
+    chance_to_evade = min(chance_to_evade, 0.9)
+
+    w *= 1 - chance_to_evade
+
     def HitValue(e):
       dmg = 35 if is_premium else 20
       if isinstance(e, Tank) and IsAlive(e):
