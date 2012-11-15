@@ -114,7 +114,7 @@ def EvaluateControl(me, world, control):
           dist_to_shell[shell.id] = 1e3
         dist_to_shell[shell.id] = min(dist_to_shell[shell.id], d)
 
-    if IsStuck(x, 0.5*me.r, world):
+    if IsStuck(x, 0.4*me.r, world):
       reliability *= 0.95**STEP
       score -= 0.001 * STEP
 
