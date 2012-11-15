@@ -277,7 +277,8 @@ class MyStrategy:
     move.left_track_power = current_control[me.id].real
     move.right_track_power = current_control[me.id].imag
 
-    if abs(attack.rel_angle) < 0.005 and world.tick >= 7:
+    my_index = sorted(t.id for t in world.tanks if t.teammate).index(me.id)
+    if abs(attack.rel_angle) < 0.005 and world.tick >= 6 + 2 * my_index:
       move.fire_type = attack.fire_type
     else:
       move.fire_type = FireType.NONE
