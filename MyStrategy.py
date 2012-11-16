@@ -253,6 +253,11 @@ def TraceShot(angle, is_premium, me, world):
           dmg = 45 + 25 * backness
         else:
           dmg = 23 + 17 * backness
+        basic_dmg = 35 if is_premium else 20
+        if e.hull_durability <= basic_dmg:
+          dmg += 12 # expected score for killing
+        elif e.crew_health <= basic_dmg:
+          dmg += 5 + 4 * backness
         return -dmg if e.teammate else dmg
       return 0
 
