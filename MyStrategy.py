@@ -218,7 +218,10 @@ def TraceShot(angle, is_premium, me, world):
   reliability = 1
   for e in sorted(events, key=events.get):
     t = events[e]
-    rel_pos = (e.pos + e.v * t - me.pos) * cmath.rect(1, -angle)
+    pos = e.pos + e.v * t
+    if isinstance(e, Tank) and IsAlive(e):
+      pos = Clip(pos, world, clip=35)
+    rel_pos = (pos - me.pos) * cmath.rect(1, -angle)
     if rel_pos.real < 0:
       continue
     d = abs(rel_pos.imag)
@@ -288,9 +291,7 @@ def CollectAttacks(me, world):
 
       target = tank.pos + tank.v * t
 
-      clip = 40
-      target = complex(max(clip, min(target.real, world.width - clip)),
-                       max(clip, min(target.imag, world.height - clip)))
+      target = Clip(target, world, clip=35)
 
       rel_angle = cmath.phase((target - me.pos) * turret_correction)
 
