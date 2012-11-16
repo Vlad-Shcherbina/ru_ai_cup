@@ -100,7 +100,8 @@ def EvaluateControl(me, world, control):
       me.pos, me.angle,
       me.v, me.angular_speed,
       efficiency=me.efficiency,
-      step=STEP)
+      step=STEP,
+      world=world)
 
   collected = set()
   dist_to_shell = {}

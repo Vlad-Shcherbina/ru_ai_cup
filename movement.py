@@ -64,7 +64,7 @@ def ArrivalTime(pos):
   return min(t1, t2)
 
 
-def PredictMovement(control, pos0, a0, v0=0, w0=0, efficiency=1, step=1):
+def PredictMovement(control, pos0, a0, v0=0, w0=0, efficiency=1, step=1, world=None):
   f = ControlForwardSpeed(control) * efficiency
   w = ControlAngularSpeed(control) * efficiency
   x = pos0
@@ -86,4 +86,9 @@ def PredictMovement(control, pos0, a0, v0=0, w0=0, efficiency=1, step=1):
 
     x += actual_v*step
     a += actual_w*step
+
+    clip = 20
+    x = complex(max(clip, min(x.real, world.width - clip)),
+                max(clip, min(x.imag, world.height - clip)))
+
 
