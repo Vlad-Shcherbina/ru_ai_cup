@@ -244,8 +244,12 @@ def TraceShot(angle, is_premium, me, world):
     w *= 1 - chance_to_evade
 
     def HitValue(e):
-      dmg = 35 if is_premium else 20
       if isinstance(e, Tank) and IsAlive(e):
+        backness = 0.5 + 0.5 * cos(e.angle - angle)
+        if is_premium:
+          dmg = 45 + 25 * backness
+        else:
+          dmg = 23 + 17 * backness
         return -dmg if e.teammate else dmg
       return 0
 
