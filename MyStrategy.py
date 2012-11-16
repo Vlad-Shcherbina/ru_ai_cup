@@ -4,6 +4,7 @@ from pprint import pprint
 from copy import copy
 import time
 from collections import namedtuple, defaultdict
+import random
 
 from model.Move import Move
 from model.Tank import Tank
@@ -365,7 +366,7 @@ class MyStrategy:
     my_index = sorted(t.id for t in world.tanks if t.teammate).index(me.id)
     if (abs(attack.rel_angle) < 0.005 and
         world.tick >= 6 + 2 * my_index and
-        attack.value > 2):
+        attack.value > random.randrange(1, 40)):
       move.fire_type = attack.fire_type
     else:
       move.fire_type = FireType.NONE
