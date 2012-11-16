@@ -232,7 +232,7 @@ def TraceShot(angle, is_premium, me, world):
     chance_to_evade = 0
     if isinstance(e, Tank) and IsAlive(e) and not e.teammate:
       evasion_speed = 0.15 + 0.85 * abs(sin(angle - e.angle))
-      q = e.r * 1.0 / evasion_speed / (t + 1e-3)
+      q = e.r * 1.0 / evasion_speed / (t + 1e-3) / e.efficiency
       if q < 2:
         chance_to_evade = 1
       elif q < 4:
@@ -246,6 +246,7 @@ def TraceShot(angle, is_premium, me, world):
     def HitValue(e):
       if isinstance(e, Tank) and IsAlive(e):
         backness = 0.5 + 0.5 * cos(e.angle - angle)
+        backness *= exp(-t / 40 * e.efficiency)
         if is_premium:
           dmg = 45 + 25 * backness
         else:
@@ -364,7 +365,7 @@ class MyStrategy:
     my_index = sorted(t.id for t in world.tanks if t.teammate).index(me.id)
     if (abs(attack.rel_angle) < 0.005 and
         world.tick >= 6 + 2 * my_index and
-        attack.value > 1):
+        attack.value > 2):
       move.fire_type = attack.fire_type
     else:
       move.fire_type = FireType.NONE
