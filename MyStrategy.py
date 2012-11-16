@@ -261,6 +261,11 @@ def TraceShot(angle, is_premium, me, world):
           dmg += 12 # expected score for killing
         elif e.crew_health <= basic_dmg:
           dmg += 5 + 4 * backness
+
+        my_score = world.player_by_name[me.player_name].score
+        if my_score <= world.player_by_name[e.player_name].score <= my_score + 80:
+          dmg *= 1.5
+
         return -dmg if e.teammate else dmg
       return 0
 
@@ -330,6 +335,16 @@ class MyStrategy:
 
     for tank in [me] + world.tanks:
       tank.efficiency = 0.5 + 0.5 * tank.crew_health / tank.crew_max_health
+
+    player_by_name = {}
+    for player in world.players:
+      player.alive = False
+      player_by_name[player.name] = player
+    for tank in world.tanks:
+      if IsAlive(tank):
+        player_by_name[tank.player_name].is_alive = True
+
+    world.player_by_name = player_by_name
 
     #if world.tick == 500:
     #  DrawPlot(me, world)
